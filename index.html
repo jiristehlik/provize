@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulačka provizí</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f3ef;
+    --surface: #ffffff;
+    --surface2: #edeae4;
+    --border: #d8d3ca;
+    --accent: #a0732e;
+    --accent2: #2a7a58;
+    --accent3: #c0392b;
+    --text: #1a1814;
+    --text-muted: #5a5248;
+    --text-dim: #9a9088;
+    --holding: #2563a8;
+    --oddeleni: #7c3aad;
+    --broker: #1a7a52;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    font-size: 13px;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 24px 40px 20px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+  header h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+  header span {
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    min-height: calc(100vh - 65px);
+  }
+
+  .panel-left {
+    border-right: 1px solid var(--border);
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+    max-height: calc(100vh - 65px);
+    position: sticky;
+    top: 65px;
+  }
+
+  .panel-right {
+    padding: 28px 32px;
+    overflow-y: auto;
+  }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  .fee-wrap { position: relative; }
+  .fee-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Fraunces', serif;
+    font-size: 34px;
+    font-weight: 300;
+    padding: 14px 52px 14px 16px;
+    outline: none;
+    transition: border-color .2s;
+    border-radius: 2px;
+    -moz-appearance: textfield;
+  }
+  .fee-input::-webkit-outer-spin-button,
+  .fee-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .fee-input:focus { border-color: var(--accent); }
+  .fee-input::placeholder { color: var(--text-dim); }
+  .fee-currency {
+    position: absolute; right: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim); font-size: 14px; pointer-events: none;
+  }
+
+  .holding-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .holding-row-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--text-muted);
+  }
+  .holding-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--holding); flex-shrink: 0;
+  }
+  .holding-pct-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .holding-pct-wrap input {
+    width: 54px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    padding: 5px 8px;
+    outline: none;
+    border-radius: 2px;
+    text-align: right;
+    -moz-appearance: textfield;
+    transition: border-color .2s;
+  }
+  .holding-pct-wrap input::-webkit-outer-spin-button,
+  .holding-pct-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .holding-pct-wrap input:focus { border-color: var(--accent); }
+  .holding-pct-wrap span { color: var(--text-dim); font-size: 12px; }
+
+  .people-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .person-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+    transition: border-color .2s;
+  }
+  .person-card:hover { border-color: #3a3830; }
+
+  .field-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+  }
+
+  select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 8px 28px 8px 10px;
+    outline: none;
+    border-radius: 2px;
+    transition: border-color .2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a574f'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    cursor: pointer;
+  }
+  select:focus { border-color: var(--accent); }
+  select option { background: #ffffff; color: #1a1814; }
+
+  .person-delete {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 6px 4px;
+    transition: color .2s;
+    align-self: end;
+  }
+  .person-delete:hover { color: var(--accent3); }
+
+  .person-model-badge {
+    grid-column: 1 / -1;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 6px 10px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .badge-item { display: flex; gap: 5px; }
+  .badge-item .bk { color: var(--accent); }
+
+  .btn-add {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: border-color .2s, color .2s;
+    width: 100%;
+    border-radius: 2px;
+    letter-spacing: 1px;
+  }
+  .btn-add:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-calc {
+    width: 100%;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 15px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: opacity .2s;
+  }
+  .btn-calc:hover { opacity: .85; }
+
+  /* Results */
+  .results-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60%;
+    gap: 12px;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.8;
+  }
+  .results-empty .big {
+    font-family: 'Fraunces', serif;
+    font-size: 72px;
+    opacity: .1;
+    line-height: 1;
+  }
+
+  .result-block {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    animation: fadeUp .3s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 30px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .result-title .fee-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .split-bar {
+    display: flex;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 12px 0 14px;
+    gap: 2px;
+  }
+  .split-bar-seg { border-radius: 2px; transition: width .5s cubic-bezier(.16,1,.3,1); }
+
+  .legend-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .legend-row:last-child { border-bottom: none; }
+  .legend-name { display: flex; align-items: center; gap: 8px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .legend-pct { color: var(--text-dim); font-size: 11px; }
+  .legend-value {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 300;
+  }
+
+  .brokers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .broker-result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .broker-result-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--broker);
+  }
+  .broker-result-name {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 300;
+    margin-bottom: 3px;
+  }
+  .broker-result-role {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  .broker-result-amount {
+    font-family: 'Fraunces', serif;
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--accent2);
+    letter-spacing: -1px;
+  }
+  .broker-result-amount .currency {
+    font-size: 15px;
+    font-weight: 300;
+    color: var(--text-muted);
+    margin-left: 3px;
+  }
+  .broker-result-breakdown {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 2;
+  }
+  .broker-result-breakdown span { color: var(--text-muted); }
+
+  /* Cost cards */
+  .cost-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+  }
+  .cost-amount-wrap { position: relative; }
+  .cost-amount-wrap input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 300;
+    padding: 10px 44px 10px 12px;
+    outline: none;
+    transition: border-color .2s;
+    border-radius: 2px;
+    -moz-appearance: textfield;
+  }
+  .cost-amount-wrap input::-webkit-outer-spin-button,
+  .cost-amount-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .cost-amount-wrap input:focus { border-color: var(--accent); }
+  .cost-amount-wrap input::placeholder { color: var(--text-dim); }
+  .cost-kc {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    font-size: 12px;
+    pointer-events: none;
+  }
+
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input[type=number] { -moz-appearance: textfield; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  @media (max-width: 700px) {
+    .app { grid-template-columns: 1fr; }
+    .panel-left { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); }
+    header { padding: 18px 20px 14px; }
+    .panel-left, .panel-right { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Provize</h1>
+  <span>Kalkulačka rozdělení fee</span>
+</header>
+
+<div class="app">
+  <div class="panel-left">
+
+    <div>
+      <div class="section-label">Celkové fee</div>
+      <div class="fee-wrap">
+        <input class="fee-input" type="number" id="fee" placeholder="0" min="0" step="1000" oninput="liveUpdate()">
+        <span class="fee-currency">Kč</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Externí náklady</div>
+      <div id="costs-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <button class="btn-add" onclick="addCost()" style="margin-top:8px">
+        <span style="font-size:16px">+</span> Přidat náklad
+      </button>
+    </div>
+
+    <div>
+      <div class="section-label">Kdo je na dealu</div>
+      <div class="people-list" id="people-list"></div>
+      <button class="btn-add" onclick="addPerson()">
+        <span style="font-size:16px">+</span> Přidat osobu
+      </button>
+    </div>
+
+    <button class="btn-calc" onclick="calculate()">SPOČÍTAT</button>
+
+    <button onclick="resetAll()" style="background:none;border:none;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;padding:4px;transition:color .2s;text-align:center;width:100%" onmouseover="this.style.color='var(--accent3)'" onmouseout="this.style.color='var(--text-dim)'">Vymazat</button>
+
+  </div>
+
+  <div class="panel-right" id="panel-right">
+    <div class="results-empty">
+      <div class="big">%</div>
+      <div>Zadej fee, vyber brokery<br>a klikni Spočítat</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Broker definitions ─────────────────────────────────────────
+// Všechny rates jsou Model 1 reference (30/15/15) – základ pro výpočet slotu
+// modelCoef určuje kolik z toho broker skutečně dostane (1 = plný, 0.5 = polovina, 1/3 = třetina)
+const BROKERS = [
+  { key: 'ivo',      name: 'Ivo Suchomel',          modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
+  { key: 'gabriela', name: 'Gabriela Škodáčková',    modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
+  { key: 'marcela',  name: 'Marcela Macků',          modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
+  { key: 'denisa',   name: 'Denisa Nepevná',         modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
+  { key: 'vasyl',    name: 'Vasyl Bulyna',           modelCoef: 0.5, rates: { exekuce: 30, prostor: 15, klient: 15 } },
+  { key: 'lenka',    name: 'Lenka Šmejkalová',       modelCoef: 1/3, rates: { exekuce: 30, prostor: 15, klient: 15 } },
+  { key: 'jiri',     name: 'Jiří Stehlík',           modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
+];
+
+const ROLES = [
+  { key: 'exekuce', label: 'Exekuce' },
+  { key: 'prostor',  label: 'Dodání prostoru' },
+  { key: 'klient',   label: 'Dodání klienta' },
+  { key: 'vlastni',  label: 'Vlastní' },
+];
+
+let costs = [];
+let costId = 0;
+
+function addCost() {
+  costs.push({ id: costId++, label: '', amount: 0 });
+  renderCosts();
+}
+function removeCost(id) {
+  costs = costs.filter(c => c.id !== id);
+  renderCosts();
+  liveUpdate();
+}
+function updateCost(id, field, value) {
+  const c = costs.find(c => c.id === id);
+  if (c) c[field] = value;
+}
+function renderCosts() {
+  const list = document.getElementById('costs-list');
+  list.innerHTML = '';
+
+  if (costs.length === 0) {
+    list.innerHTML = `<div style="font-size:11px;color:var(--text-dim);padding:4px 2px">Žádné náklady zatím nebyly přidány.</div>`;
+    return;
+  }
+
+  costs.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'cost-card';
+    card.innerHTML = `
+      <div class="cost-amount-wrap">
+        <input type="number" min="0" step="100" placeholder="0"
+          value="${c.amount || ''}"
+          style="-moz-appearance:textfield"
+          oninput="updateCost(${c.id}, 'amount', parseFloat(this.value)||0); liveUpdate()">
+        <span class="cost-kc">Kč</span>
+      </div>
+      <button class="person-delete" onclick="removeCost(${c.id})" title="Odstranit">×</button>
+    `;
+    list.appendChild(card);
+  });
+}
+
+let people = [];
+let personId = 0;
+
+function brokerByKey(k) { return BROKERS.find(b => b.key === k); }
+
+// ── Render ─────────────────────────────────────────────────────
+function renderPeople() {
+  const list = document.getElementById('people-list');
+  list.innerHTML = '';
+
+  people.forEach(p => {
+    const broker = p.brokerKey ? brokerByKey(p.brokerKey) : null;
+
+    const brokerOpts = [
+      `<option value="">— vybrat —</option>`,
+      ...BROKERS.map(b => `<option value="${b.key}" ${p.brokerKey === b.key ? 'selected' : ''}>${b.name}</option>`)
+    ].join('');
+
+    const roleOpts = ROLES.map(r =>
+      `<option value="${r.key}" ${p.role === r.key ? 'selected' : ''}>${r.label}</option>`
+    ).join('');
+
+    // no badge shown - rates are hidden
+    let badgeHtml = '';
+
+    // custom % input for vlastni role – styled like cost input
+    const vlastniHtml = p.role === 'vlastni' ? `
+      <div style="grid-column:1/-1">
+        <div class="field-label">Vlastní sazba (% z fee)</div>
+        <div class="cost-amount-wrap" style="max-width:160px">
+          <input type="number" min="1" max="100" step="1"
+            value="${p.vlastniPct != null ? p.vlastniPct : ''}"
+            placeholder="0"
+            style="font-family:'Fraunces',serif;font-size:22px;font-weight:300;padding:10px 36px 10px 12px;-moz-appearance:textfield"
+            onchange="updatePerson(${p.id}, 'vlastniPct', Math.min(100,Math.max(1,parseFloat(this.value)||1)))">
+          <span class="cost-kc" style="font-size:13px">%</span>
+        </div>
+      </div>` : '';
+
+    const card = document.createElement('div');
+    card.className = 'person-card';
+    card.innerHTML = `
+      <div>
+        <div class="field-label">Broker</div>
+        <select onchange="updatePerson(${p.id}, 'brokerKey', this.value)">${brokerOpts}</select>
+      </div>
+      <div>
+        <div class="field-label">Role</div>
+        <select onchange="updatePerson(${p.id}, 'role', this.value)">${roleOpts}</select>
+      </div>
+      <button class="person-delete" onclick="removePerson(${p.id})" title="Odstranit">×</button>
+      ${vlastniHtml}
+      ${badgeHtml}
+    `;
+    list.appendChild(card);
+  });
+}
+
+function addPerson() {
+  people.push({ id: personId++, brokerKey: '', role: 'exekuce' });
+  renderPeople();
+}
+
+let hasCalculated = false;
+
+function liveUpdate() {
+  if (hasCalculated) calculate();
+}
+
+function removePerson(id) {
+  people = people.filter(p => p.id !== id);
+  renderPeople();
+  liveUpdate();
+}
+
+function updatePerson(id, field, value) {
+  const p = people.find(p => p.id === id);
+  if (p) { p[field] = value; renderPeople(); liveUpdate(); }
+}
+
+function resetAll() {
+  hasCalculated = false;
+  document.getElementById('fee').value = '';
+  costs = []; costId = 0;
+  renderCosts();
+  people = []; personId = 0;
+  addPerson(); people[people.length-1].role = 'exekuce';
+  addPerson(); people[people.length-1].role = 'prostor';
+  addPerson(); people[people.length-1].role = 'klient';
+  renderPeople();
+  document.getElementById('panel-right').innerHTML = `
+    <div class="results-empty">
+      <div class="big">%</div>
+      <div>Zadej fee, vyber brokery<br>a klikni Spočítat</div>
+    </div>`;
+}
+
+// ── Error display ──────────────────────────────────────────────
+function showError(msg) {
+  const panel = document.getElementById('panel-right');
+  panel.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60%;gap:16px;text-align:center">
+      <div style="font-family:'Fraunces',serif;font-size:48px;color:var(--accent3);opacity:.3">!</div>
+      <div style="color:var(--accent3);font-size:13px;max-width:340px;line-height:1.8">${msg}</div>
+    </div>`;
+}
+
+// ── Calculate ──────────────────────────────────────────────────
+function calculate() {
+  hasCalculated = true;
+  const fee = parseFloat(document.getElementById('fee').value);
+  if (!fee || fee <= 0) { alert('Zadej platnou výši fee.'); return; }
+
+  const totalCosts = costs.reduce((s, c) => s + (c.amount || 0), 0);
+  const netFee = fee - totalCosts;
+  if (netFee <= 0) { alert('Náklady přesahují celkové fee.'); return; }
+
+  const pctH = 0.30;
+  const holdingAmt = netFee * pctH;
+
+  const active = people.filter(p => p.brokerKey);
+
+  // Count how many brokers share each role (vlastni never shared)
+  const roleCount = {};
+  active.forEach(p => {
+    if (p.role !== 'vlastni') roleCount[p.role] = (roleCount[p.role] || 0) + 1;
+  });
+
+  const payouts = active.map(p => {
+    const broker = brokerByKey(p.brokerKey);
+    let slotPct, brokerPct, splitCount;
+    if (p.role === 'vlastni') {
+      const modelCoef = broker?.modelCoef ?? 1;
+      slotPct = p.vlastniPct ?? 0;
+      brokerPct = slotPct * modelCoef;
+      splitCount = 1;
+    } else {
+      const modelCoef = broker?.modelCoef ?? 1;
+      const fullRatePct = broker?.rates[p.role] ?? 0;  // vždy Model 1 reference
+      splitCount = roleCount[p.role] || 1;
+      slotPct = fullRatePct / splitCount;               // slot = plný podíl
+      brokerPct = slotPct * modelCoef;                  // broker dostane jen svůj podíl
+    }
+    const slotAmt   = netFee * slotPct / 100;
+    const brokerAmt = netFee * brokerPct / 100;
+    const leftover  = slotAmt - brokerAmt;
+    return { ...p, broker, slotPct, brokerPct, splitCount, amount: brokerAmt, leftover };
+  });
+
+  // Validace: celkové sloty nesmí přesáhnout 60 %
+  const totalSlotPct = payouts.reduce((s, p) => s + p.slotPct, 0);
+  if (totalSlotPct > 60.01) {
+    showError(`Součet přiřazených podílů je ${totalSlotPct.toFixed(1)} % – maximum je 60 %. Uprav role nebo sazby.`);
+    return;
+  }
+
+  const totalBroker      = payouts.reduce((s, p) => s + p.amount, 0);
+  const totalLeftover    = payouts.reduce((s, p) => s + p.leftover, 0);
+  const oddeleniAmtFinal = netFee * 0.10 + totalLeftover;        // 10 % + rozdíly z modelů 2 a 3
+
+  // Zbývá rozdělit = standardní pool (60%) mínus obsazené sloty
+  // Slot pro každou roli je vždy 30/15/15 % (Model 1 jako reference)
+  const STANDARD_SLOTS = { exekuce: 30, prostor: 15, klient: 15 };
+  const assignedRoles = new Set(active.filter(p => p.role !== 'vlastni').map(p => p.role));
+  const vlastniSlots  = active.filter(p => p.role === 'vlastni').reduce((s, p) => s + (p.vlastniPct ?? 0), 0);
+  let allocatedPct = vlastniSlots;
+  for (const role of Object.keys(STANDARD_SLOTS)) {
+    if (assignedRoles.has(role)) allocatedPct += STANDARD_SLOTS[role];
+  }
+  const remainingAmt = Math.max(0, netFee * (0.60 - allocatedPct / 100));
+
+  renderResults(fee, totalCosts, netFee, holdingAmt, oddeleniAmtFinal, totalBroker, remainingAmt, payouts, pctH);
+}
+
+// ── Render results ─────────────────────────────────────────────
+function fmt(n)    { return Math.round(n).toLocaleString('cs-CZ') + ' Kč'; }
+function fmtP(n)   { return n.toFixed(1).replace('.', ',') + ' %'; }
+
+function renderResults(fee, totalCosts, netFee, holding, oddeleni, brokerTotal, remaining, payouts, pH) {
+  const panel = document.getElementById('panel-right');
+  const oPct  = oddeleni / netFee;
+  const bPct  = brokerTotal / netFee;
+  const rPct  = remaining / netFee;
+  const hasCosts = totalCosts > 0;
+
+  const costsRows = hasCosts ? costs.filter(c => c.amount > 0).map(c => `
+    <div class="legend-row" style="padding:7px 0">
+      <div class="legend-name" style="gap:6px">
+        <div class="legend-dot" style="background:var(--border)"></div>
+        <span style="color:var(--text-muted)">${c.label || 'Náklad'}</span>
+      </div>
+      <div style="font-family:'Fraunces',serif;font-size:16px;color:var(--text-muted)">− ${Math.round(c.amount).toLocaleString('cs-CZ')} Kč</div>
+    </div>`).join('') : '';
+
+  panel.innerHTML = `
+    <div class="result-block">
+
+      <div class="result-title">
+        <span>${fmt(fee)}</span>
+        <span class="fee-label">celkové fee</span>
+      </div>
+
+      ${hasCosts ? `
+      <div>
+        <div class="section-label">Odečet nákladů</div>
+        ${costsRows}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--border);margin-top:4px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-muted)">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--accent)"></div>
+            <span>Základ pro dělení</span>
+          </div>
+          <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--accent)">${fmt(netFee)}</div>
+        </div>
+      </div>` : ''}
+
+      <div>
+        <div class="section-label">Přehled rozdělení${hasCosts ? ' (ze základu)' : ''}</div>
+        <div class="split-bar">
+          <div class="split-bar-seg" style="width:${pH*100}%;background:var(--holding)"></div>
+          <div class="split-bar-seg" style="width:${oPct*100}%;background:var(--oddeleni)"></div>
+          <div class="split-bar-seg" style="width:${bPct*100}%;background:var(--broker)"></div>
+          ${remaining > 0.5 ? `<div class="split-bar-seg" style="width:${rPct*100}%;background:var(--border)"></div>` : ''}
+        </div>
+        <div class="legend-row">
+          <div class="legend-name">
+            <div class="legend-dot" style="background:var(--holding)"></div>
+            <span>Holding</span>
+            <span class="legend-pct">${fmtP(pH*100)}</span>
+          </div>
+          <div class="legend-value">${fmt(holding)}</div>
+        </div>
+        <div class="legend-row">
+          <div class="legend-name">
+            <div class="legend-dot" style="background:var(--oddeleni)"></div>
+            <span>Oddělení</span>
+            <span class="legend-pct">${fmtP(oPct*100)}</span>
+          </div>
+          <div class="legend-value">${fmt(oddeleni)}</div>
+        </div>
+        <div class="legend-row">
+          <div class="legend-name">
+            <div class="legend-dot" style="background:var(--broker)"></div>
+            <span>Agenti celkem</span>
+            <span class="legend-pct">${fmtP(bPct*100)}</span>
+          </div>
+          <div class="legend-value">${fmt(brokerTotal)}</div>
+        </div>
+        ${remaining > 0.5 ? `
+        <div class="legend-row">
+          <div class="legend-name">
+            <div class="legend-dot" style="background:var(--border)"></div>
+            <span style="color:var(--accent3)">Zbývá rozdělit</span>
+            <span class="legend-pct" style="color:var(--accent3)">${fmtP(rPct*100)}</span>
+          </div>
+          <div class="legend-value" style="color:var(--accent3)">${fmt(remaining)}</div>
+        </div>` : ''}
+      </div>
+
+      <div>
+        <div class="section-label">Výplaty brokerů</div>
+        ${payouts.length === 0
+          ? '<p style="color:var(--text-dim);font-size:12px;margin-top:8px">Žádný broker nebyl přiřazen.</p>'
+          : `<div class="brokers-grid">
+              ${payouts.map(p => {
+                const roleName = p.role === 'vlastni' ? 'Vlastní sazba' : (ROLES.find(r => r.key === p.role)?.label || p.role);
+                return `
+                <div class="broker-result-card">
+                  <div class="broker-result-name">${p.broker.name}</div>
+                  <div class="broker-result-role">${roleName}${p.splitCount > 1 ? ' · sdíleno' : ''}</div>
+                  <div class="broker-result-amount">
+                    ${Math.round(p.amount).toLocaleString('cs-CZ')}<span class="currency">Kč</span>
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>`
+        }
+      </div>
+
+    </div>
+  `;
+}
+
+// Start with three default rows
+addPerson(); people[people.length-1].role = 'exekuce';
+addPerson(); people[people.length-1].role = 'prostor';
+addPerson(); people[people.length-1].role = 'klient';
+renderPeople();
+</script>
+</body>
+</html>
