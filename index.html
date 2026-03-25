@@ -32,6 +32,14 @@
     font-size: 13px;
   }
 
+  .wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    min-height: 100vh;
+  }
+
   header {
     border-bottom: 1px solid var(--border);
     padding: 24px 40px 20px;
@@ -448,6 +456,7 @@
 </head>
 <body>
 
+<div class="wrapper">
 <header>
   <h1>Provize</h1>
   <span>Kalkulačka rozdělení fee</span>
@@ -492,6 +501,7 @@
       <div>Zadej fee, vyber brokery<br>a klikni Spočítat</div>
     </div>
   </div>
+</div>
 </div>
 
 <script>
