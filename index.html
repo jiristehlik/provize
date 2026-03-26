@@ -48,6 +48,7 @@
     top: 0;
     background: var(--bg);
     z-index: 100;
+    justify-content: space-between;
   }
   header h1 {
     font-family: 'Fraunces', serif;
@@ -444,6 +445,229 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
+  .legend-row-sub {
+    padding: 6px 0 6px 0;
+    border-bottom: none !important;
+    display: none;
+  }
+  .legend-row-sub.open { display: flex; }
+  .legend-row-sub + .legend-row-sub {
+    border-top: none;
+  }
+  .legend-sub-dash {
+    width: 10px;
+    height: 1px;
+    background: var(--border);
+    flex-shrink: 0;
+    margin-right: 4px;
+  }
+  .legend-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 10px;
+    padding: 0 0 0 4px;
+    transition: color .2s, transform .2s;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+  }
+  .legend-toggle:hover { color: var(--text); }
+  .legend-toggle.open { color: var(--text-muted); }
+
+  /* Department result section */
+  .dept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .dept-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dept-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--oddeleni);
+  }
+
+  .dept-card-name {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 300;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dept-card-brokers {
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dept-card-amount {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--oddeleni);
+    letter-spacing: -1px;
+  }
+
+  .dept-card-amount .currency {
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--text-muted);
+    margin-left: 3px;
+  }
+
+  .dept-card-pct {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .header-left { display: flex; align-items: baseline; gap: 16px; }
+
+  /* History */
+  .history-section {
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .history-section .section-label { margin-bottom: 4px; }
+
+  .history-empty {
+    font-size: 11px;
+    color: var(--text-dim);
+    padding: 2px;
+  }
+
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+    transition: border-color .2s;
+  }
+  .history-item:hover { border-color: var(--accent); }
+  .history-item-active { border-color: var(--accent) !important; }
+
+  .history-item-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .history-item-fee {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-weight: 300;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .history-item-delete {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 4px;
+    transition: color .2s;
+    flex-shrink: 0;
+  }
+  .history-item-delete:hover { color: var(--accent3); }
+
+  .history-item-meta {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .btn-save {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: border-color .2s, color .2s;
+    width: 100%;
+    border-radius: 2px;
+    letter-spacing: 1px;
+  }
+  .btn-save:hover { border-color: var(--accent2); color: var(--accent2); }
+  .btn-save:disabled { opacity: .35; cursor: default; pointer-events: none; }
+
+  .btn-export {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: border-color .2s, color .2s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .btn-export:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-export:disabled { opacity: .35; cursor: default; pointer-events: none; }
+  .btn-export svg { flex-shrink: 0; }
+
+  @media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { background: #f5f3ef; font-size: 12px; }
+    .wrapper { border: none; max-width: 100%; }
+    header { position: static; border-bottom: 1px solid #d8d3ca; padding: 16px 24px 12px; }
+    .btn-export, .panel-left { display: none !important; }
+    .app { display: block; }
+    .panel-right { padding: 20px 24px; overflow: visible; }
+    .result-block { gap: 20px; }
+    .split-bar-seg { print-color-adjust: exact; }
+    .broker-result-card, .dept-card { break-inside: avoid; }
+    .brokers-grid { grid-template-columns: repeat(3, 1fr); }
+    @page { margin: 1.2cm 1.5cm; size: A4; }
+  }
+
   @media (max-width: 700px) {
     .app { grid-template-columns: 1fr; }
     .panel-left { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); }
@@ -456,8 +680,16 @@
 
 <div class="wrapper">
 <header>
-  <h1>Provize</h1>
-  <span>Kalkulačka rozdělení fee</span>
+  <div class="header-left">
+    <h1>Provize</h1>
+    <span>Kalkulačka rozdělení fee</span>
+  </div>
+  <button class="btn-export" onclick="exportPrint()" id="btn-export" disabled>
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M2 9v2h9V9M6.5 1v7M4 5.5l2.5 2.5 2.5-2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Exportovat
+  </button>
 </header>
 
 <div class="app">
@@ -491,6 +723,41 @@
 
     <button onclick="resetAll()" style="background:none;border:none;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;padding:4px;transition:color .2s;text-align:center;width:100%" onmouseover="this.style.color='var(--accent3)'" onmouseout="this.style.color='var(--text-dim)'">Vymazat</button>
 
+    <div class="history-section">
+      <div class="section-label">Uložené dealy</div>
+
+      <!-- Nový deal: tlačítko + rozbalitelný input -->
+      <div id="save-new-wrap" style="display:none;flex-direction:column;gap:6px;">
+        <button id="btn-save" class="btn-save" onclick="toggleSaveWrap()">
+          <span style="font-size:15px">↓</span> Uložit deal
+        </button>
+        <div id="save-wrap" style="display:none;flex-direction:column;gap:6px;">
+          <div style="display:flex;gap:6px;align-items:stretch;">
+            <input id="deal-name" type="text" placeholder="Název dealu"
+              style="flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:9px 12px;outline:none;border-radius:2px;transition:border-color .2s;"
+              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+              onkeydown="if(event.key==='Enter') saveDeal(); if(event.key==='Escape') toggleSaveWrap();">
+            <button onclick="saveDeal()"
+              style="background:var(--accent2);color:#fff;border:none;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;padding:9px 14px;cursor:pointer;border-radius:2px;white-space:nowrap;transition:opacity .2s;"
+              onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">Uložit</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Otevřený uložený deal: Uložit změny + Uložit jako nový -->
+      <div id="save-existing-wrap" style="display:none;flex-direction:column;gap:6px;">
+        <button class="btn-save" onclick="saveChanges()" style="border-color:var(--accent2);color:var(--accent2);">
+          <span id="save-changes-dot" style="width:6px;height:6px;border-radius:50%;background:var(--accent2);display:none;flex-shrink:0;"></span>
+          <span style="font-size:15px">↓</span> Uložit změny
+        </button>
+        <button onclick="saveAsNew()"
+          style="background:none;border:none;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;padding:2px 0;text-align:center;width:100%;transition:color .2s;"
+          onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-dim)'">+ uložit jako nový deal</button>
+      </div>
+
+      <div id="history-list"></div>
+    </div>
+
   </div>
 
   <div class="panel-right" id="panel-right">
@@ -503,17 +770,174 @@
 </div>
 
 <script>
+// ── History (localStorage) ─────────────────────────────────────
+const HISTORY_KEY = 'provize_history';
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveHistory(items) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+}
+
+function toggleSaveWrap() {
+  const wrap = document.getElementById('save-wrap');
+  const isOpen = wrap.style.display === 'flex';
+  wrap.style.display = isOpen ? 'none' : 'flex';
+  if (!isOpen) {
+    setTimeout(() => document.getElementById('deal-name').focus(), 50);
+  }
+}
+
+// ── Save UI state ──────────────────────────────────────────────
+// mode: 'none' | 'new' | 'existing'
+function updateSaveUI(mode) {
+  document.getElementById('save-new-wrap').style.display      = mode === 'new'      ? 'flex' : 'none';
+  document.getElementById('save-existing-wrap').style.display = mode === 'existing' ? 'flex' : 'none';
+}
+
+function markDirty() {
+  if (!currentDealId) return;
+  const dot = document.getElementById('save-changes-dot');
+  if (dot) dot.style.display = 'inline-block';
+}
+
+function markClean() {
+  const dot = document.getElementById('save-changes-dot');
+  if (dot) dot.style.display = 'none';
+}
+
+// ── Save actions ───────────────────────────────────────────────
+function saveDeal() {
+  // Called from new-deal mode: save as brand new
+  const fee = getFeeValue();
+  if (!fee) return;
+  const label = (document.getElementById('deal-name').value || '').trim();
+  const snapshot = {
+    id: Date.now(),
+    label: label || `${Math.round(fee).toLocaleString('cs-CZ')} Kč`,
+    fee,
+    costs: JSON.parse(JSON.stringify(costs)),
+    people: JSON.parse(JSON.stringify(people)),
+    date: new Date().toLocaleDateString('cs-CZ', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+  };
+  currentDealId = snapshot.id;
+  currentDealName = snapshot.label;
+  const items = loadHistory();
+  items.unshift(snapshot);
+  if (items.length > 20) items.pop();
+  saveHistory(items);
+  renderHistory();
+  document.getElementById('save-wrap').style.display = 'none';
+  updateSaveUI('existing');
+  markClean();
+}
+
+function saveChanges() {
+  // Called from existing-deal mode: overwrite in place
+  const fee = getFeeValue();
+  if (!fee) return;
+  const items = loadHistory();
+  const idx = items.findIndex(i => i.id === currentDealId);
+  if (idx === -1) return;
+  items[idx] = {
+    ...items[idx],
+    fee,
+    costs: JSON.parse(JSON.stringify(costs)),
+    people: JSON.parse(JSON.stringify(people)),
+    date: new Date().toLocaleDateString('cs-CZ', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+  };
+  saveHistory(items);
+  renderHistory();
+  markClean();
+}
+
+function saveAsNew() {
+  currentDealId = null;
+  updateSaveUI('new');
+  document.getElementById('save-wrap').style.display = 'flex';
+  document.getElementById('deal-name').value = '';
+  setTimeout(() => document.getElementById('deal-name').focus(), 50);
+}
+
+function deleteDeal(id, e) {
+  e.stopPropagation();
+  if (id === currentDealId) {
+    currentDealId = null;
+    updateSaveUI('none');
+  }
+  const items = loadHistory().filter(i => i.id !== id);
+  saveHistory(items);
+  renderHistory();
+}
+
+let currentDealId = null;
+let currentDealName = '';
+
+function loadDeal(snapshot) {
+  const feeEl = document.getElementById('fee');
+  feeEl.value = snapshot.fee.toLocaleString('cs-CZ').replace(/\u00a0/g, ' ');
+
+  costs = snapshot.costs.map(c => ({ ...c }));
+  costId = costs.length ? Math.max(...costs.map(c => c.id)) + 1 : 0;
+  renderCosts();
+
+  people = snapshot.people.map(p => ({ ...p }));
+  personId = people.length ? Math.max(...people.map(p => p.id)) + 1 : 0;
+  renderPeople();
+
+  currentDealId = snapshot.id;
+  currentDealName = snapshot.label || '';
+
+  hasCalculated = true;
+  calculate();
+  updateSaveUI('existing');
+  markClean();
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  const items = loadHistory();
+
+  if (items.length === 0) {
+    list.innerHTML = '<div class="history-empty">Zatím žádné uložené dealy.</div>';
+    return;
+  }
+
+  list.innerHTML = items.map(item => {
+    const displayLabel = item.label || `${Math.round(item.fee).toLocaleString('cs-CZ')} Kč`;
+    const isActive = item.id === currentDealId;
+    return `
+    <div class="history-item${isActive ? ' history-item-active' : ''}" onclick="loadDeal(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+      <div class="history-item-body">
+        <div class="history-item-fee">${displayLabel}</div>
+        <div class="history-item-meta">${item.date}</div>
+      </div>
+      <button class="history-item-delete" onclick="deleteDeal(${item.id}, event)" title="Smazat">×</button>
+    </div>`;
+  }).join('');
+}
+
 // ── Broker definitions ─────────────────────────────────────────
 // Všechny rates jsou Model 1 reference (30/15/15) – základ pro výpočet slotu
 // modelCoef určuje kolik z toho broker skutečně dostane (1 = plný, 0.5 = polovina, 1/3 = třetina)
+const DEPARTMENTS = [
+  { key: 'retail_leasing', label: 'Retail Leasing' },
+  { key: 'operations',     label: 'Operations' },
+  { key: 'office_leasing', label: 'Office Leasing' },
+];
+
 const BROKERS = [
-  { key: 'ivo',      name: 'Ivo Suchomel',          modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
-  { key: 'gabriela', name: 'Gabriela Škodáčková',    modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
-  { key: 'marcela',  name: 'Marcela Macků',          modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
-  { key: 'denisa',   name: 'Denisa Nepevná',         modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
-  { key: 'vasyl',    name: 'Vasyl Bulyna',           modelCoef: 0.5, rates: { exekuce: 30, prostor: 15, klient: 15 } },
-  { key: 'lenka',    name: 'Lenka Šmejkalová',       modelCoef: 1/3, rates: { exekuce: 30, prostor: 15, klient: 15 } },
-  { key: 'jiri',     name: 'Jiří Stehlík',           modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
+  { key: 'ivo',      name: 'Ivo Suchomel',          dept: 'operations',     modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
+  { key: 'gabriela', name: 'Gabriela Škodáčková',    dept: 'retail_leasing', modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
+  { key: 'marcela',  name: 'Marcela Macků',          dept: 'retail_leasing', modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
+  { key: 'denisa',   name: 'Denisa Nepevná',         dept: 'retail_leasing', modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
+  { key: 'vasyl',    name: 'Vasyl Bulyna',           dept: 'office_leasing', modelCoef: 0.5, rates: { exekuce: 30, prostor: 15, klient: 15 } },
+  { key: 'lenka',    name: 'Lenka Šmejkalová',       dept: 'retail_leasing', modelCoef: 1/3, rates: { exekuce: 30, prostor: 15, klient: 15 } },
+  { key: 'jiri',     name: 'Jiří Stehlík',           dept: 'retail_leasing', modelCoef: 1,   rates: { exekuce: 30, prostor: 15, klient: 15 } },
 ];
 
 const ROLES = [
@@ -631,7 +1055,7 @@ function addPerson() {
 let hasCalculated = false;
 
 function liveUpdate() {
-  if (hasCalculated) calculate();
+  if (hasCalculated) { markDirty(); calculate(); }
 }
 
 function removePerson(id) {
@@ -668,6 +1092,8 @@ function getFeeValue() {
 
 function resetAll() {
   hasCalculated = false;
+  currentDealId = null;
+  currentDealName = '';
   document.getElementById('fee').value = '';
   costs = []; costId = 0;
   renderCosts();
@@ -681,6 +1107,9 @@ function resetAll() {
       <div class="big">%</div>
       <div>Zadej fee, vyber brokery<br>a klikni Spočítat</div>
     </div>`;
+  document.getElementById('btn-export').disabled = true;
+  updateSaveUI('none');
+  renderHistory();
 }
 
 // ── Error display ──────────────────────────────────────────────
@@ -691,6 +1120,51 @@ function showError(msg) {
       <div style="font-family:'Fraunces',serif;font-size:48px;color:var(--accent3);opacity:.3">!</div>
       <div style="color:var(--accent3);font-size:13px;max-width:340px;line-height:1.8">${msg}</div>
     </div>`;
+}
+
+// ── Department section ─────────────────────────────────────────
+function renderDeptSection(deptByKey, payouts) {
+  if (!deptByKey || Object.keys(deptByKey).length === 0) return '';
+
+  const deptBrokers = {};
+  payouts.forEach(p => {
+    if (!p.broker?.dept) return;
+    const dk = p.broker.dept;
+    if (!deptBrokers[dk]) deptBrokers[dk] = [];
+    const firstName = p.broker.name.split(' ')[0];
+    if (!deptBrokers[dk].includes(firstName)) deptBrokers[dk].push(firstName);
+  });
+
+  const cards = DEPARTMENTS.filter(d => (deptByKey[d.key] || 0) > 0).map(({ key: dKey, label }) => {
+    const deptAmt = deptByKey[dKey];
+    const brokerNames = (deptBrokers[dKey] || []).join(', ');
+    return `
+      <div class="dept-card">
+        <div class="dept-card-name">${label}</div>
+        <div class="dept-card-brokers">${brokerNames}</div>
+        <div class="dept-card-amount">
+          ${Math.round(deptAmt).toLocaleString('cs-CZ')}<span class="currency">Kč</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div>
+      <div class="section-label">Rozdělení oddělení</div>
+      <div class="dept-grid">${cards}</div>
+    </div>`;
+}
+
+function toggleSubRows(group, btn) {
+  const rows = document.querySelectorAll(`[data-group="${group}"]`);
+  const isOpen = btn.classList.contains('open');
+  rows.forEach(r => r.classList.toggle('open', !isOpen));
+  btn.classList.toggle('open', !isOpen);
+  btn.textContent = isOpen ? '▾' : '▴';
+}
+
+function exportPrint() {
+  window.print();
 }
 
 // ── Calculate ──────────────────────────────────────────────────
@@ -714,25 +1188,62 @@ function calculate() {
     if (p.role !== 'vlastni') roleCount[p.role] = (roleCount[p.role] || 0) + 1;
   });
 
+  // ── Krok 1: Váhy oddělení podle role (Model 1 reference sazby)
+  const ROLE_WEIGHTS = { exekuce: 30, prostor: 15, klient: 15 };
+
+  // Spočítej celkovou váhu každého brokera (součet sazeb jeho rolí)
+  // Pro vlastni: použij vlastniPct jako váhu
+  const brokerWeights = {}; // brokerKey → celková váha (%)
+  active.forEach(p => {
+    const weight = p.role === 'vlastni'
+      ? (p.vlastniPct ?? 0)
+      : (ROLE_WEIGHTS[p.role] ?? 0) / (roleCount[p.role] || 1);
+    brokerWeights[p.brokerKey] = (brokerWeights[p.brokerKey] || 0) + weight;
+  });
+
+  // Celková váha všech brokerů = základ pro rozdělení fee mezi oddělení
+  const totalWeight = Object.values(brokerWeights).reduce((s, v) => s + v, 0);
+
+  // Krok 2: Přiřaď každému oddělení jeho díl fee (proporcionálně k váze brokerů)
+  // Pak z tohoto dílu vypočítej holding, broker a dept podle modelu brokera
+  // Model koeficienty: M1 broker=60%, dept=10%, holding=30%
+  //                    M2 broker=30%, dept=40%, holding=30%
+  //                    M3 broker=20%, dept=50%, holding=30%
+  const MODEL_SPLITS = {
+    1:    { brokerShare: 0.60, deptShare: 0.10 },
+    0.5:  { brokerShare: 0.30, deptShare: 0.40 },
+    0.333:{ brokerShare: 0.20, deptShare: 0.50 },
+  };
+  function getModelSplits(coef) {
+    if (Math.abs(coef - 1)   < 0.01) return MODEL_SPLITS[1];
+    if (Math.abs(coef - 0.5) < 0.01) return MODEL_SPLITS[0.5];
+    return MODEL_SPLITS[0.333];
+  }
+
   const payouts = active.map(p => {
     const broker = brokerByKey(p.brokerKey);
-    let slotPct, brokerPct, splitCount;
-    if (p.role === 'vlastni') {
-      const modelCoef = broker?.modelCoef ?? 1;
-      slotPct = p.vlastniPct ?? 0;
-      brokerPct = slotPct * modelCoef;
-      splitCount = 1;
-    } else {
-      const modelCoef = broker?.modelCoef ?? 1;
-      const fullRatePct = broker?.rates[p.role] ?? 0;  // vždy Model 1 reference
-      splitCount = roleCount[p.role] || 1;
-      slotPct = fullRatePct / splitCount;               // slot = plný podíl
-      brokerPct = slotPct * modelCoef;                  // broker dostane jen svůj podíl
-    }
-    const slotAmt   = netFee * slotPct / 100;
-    const brokerAmt = netFee * brokerPct / 100;
-    const leftover  = slotAmt - brokerAmt;
-    return { ...p, broker, slotPct, brokerPct, splitCount, amount: brokerAmt, leftover };
+    const modelCoef = broker?.modelCoef ?? 1;
+    const splits = getModelSplits(modelCoef);
+
+    const roleWeight = p.role === 'vlastni'
+      ? (p.vlastniPct ?? 0)
+      : (ROLE_WEIGHTS[p.role] ?? 0) / (roleCount[p.role] || 1);
+
+    // Podíl fee připadající na tohoto brokera (podle váhy jeho rolí)
+    const brokerFeeShare = totalWeight > 0 ? roleWeight / totalWeight : 0;
+    const brokerFeePart  = netFee * brokerFeeShare; // Kč připadající na tohoto brokera
+
+    const brokerAmt = brokerFeePart * splits.brokerShare;
+    const deptAmt   = brokerFeePart * splits.deptShare;
+    // holdingAmt se počítá globálně jako 30% z celého netFee
+
+    // slotPct pro validaci a zobrazení (Model 1 reference)
+    const slotPct  = roleWeight;
+    const brokerPct = brokerFeeShare * splits.brokerShare * 100;
+    const deptPct   = brokerFeeShare * splits.deptShare   * 100;
+
+    return { ...p, broker, slotPct, brokerPct, deptPct, splitCount: roleCount[p.role] || 1,
+             amount: brokerAmt, deptAmt, brokerFeePart };
   });
 
   // Validace: celkové sloty nesmí přesáhnout 60 %
@@ -742,12 +1253,17 @@ function calculate() {
     return;
   }
 
-  const totalBroker      = payouts.reduce((s, p) => s + p.amount, 0);
-  const totalLeftover    = payouts.reduce((s, p) => s + p.leftover, 0);
-  const oddeleniAmtFinal = netFee * 0.10 + totalLeftover;        // 10 % + rozdíly z modelů 2 a 3
+  const totalBroker = payouts.reduce((s, p) => s + p.amount, 0);
 
-  // Zbývá rozdělit = standardní pool (60%) mínus obsazené sloty
-  // Slot pro každou roli je vždy 30/15/15 % (Model 1 jako reference)
+  // Oddělení per dept
+  const deptByKey = {};
+  payouts.forEach(p => {
+    if (!p.broker?.dept) return;
+    deptByKey[p.broker.dept] = (deptByKey[p.broker.dept] || 0) + p.deptAmt;
+  });
+  const oddeleniAmtFinal = Object.values(deptByKey).reduce((s, v) => s + v, 0);
+
+  // Zbývá rozdělit = neobsazené role
   const STANDARD_SLOTS = { exekuce: 30, prostor: 15, klient: 15 };
   const assignedRoles = new Set(active.filter(p => p.role !== 'vlastni').map(p => p.role));
   const vlastniSlots  = active.filter(p => p.role === 'vlastni').reduce((s, p) => s + (p.vlastniPct ?? 0), 0);
@@ -757,14 +1273,17 @@ function calculate() {
   }
   const remainingAmt = Math.max(0, netFee * (0.60 - allocatedPct / 100));
 
-  renderResults(fee, totalCosts, netFee, holdingAmt, oddeleniAmtFinal, totalBroker, remainingAmt, payouts, pctH);
+  renderResults(fee, totalCosts, netFee, holdingAmt, oddeleniAmtFinal, totalBroker, remainingAmt, payouts, pctH, deptByKey);
+  document.getElementById('btn-export').disabled = false;
+  // Show correct save UI based on whether a deal is loaded
+  if (!currentDealId) updateSaveUI('new');
 }
 
 // ── Render results ─────────────────────────────────────────────
 function fmt(n)    { return Math.round(n).toLocaleString('cs-CZ') + ' Kč'; }
 function fmtP(n)   { return n.toFixed(1).replace('.', ',') + ' %'; }
 
-function renderResults(fee, totalCosts, netFee, holding, oddeleni, brokerTotal, remaining, payouts, pH) {
+function renderResults(fee, totalCosts, netFee, holding, oddeleni, brokerTotal, remaining, payouts, pH, deptByKey) {
   const panel = document.getElementById('panel-right');
   const oPct  = oddeleni / netFee;
   const bPct  = brokerTotal / netFee;
@@ -780,8 +1299,12 @@ function renderResults(fee, totalCosts, netFee, holding, oddeleni, brokerTotal, 
       <div style="font-family:'Fraunces',serif;font-size:16px;color:var(--text-muted)">− ${Math.round(c.amount).toLocaleString('cs-CZ')} Kč</div>
     </div>`).join('') : '';
 
+  const dealName = currentDealName;
+
   panel.innerHTML = `
     <div class="result-block">
+
+      ${dealName ? `<div style="font-family:'Fraunces',serif;font-size:13px;font-weight:300;color:var(--text-muted);letter-spacing:0.5px;">${dealName}</div>` : ''}
 
       <div class="result-title">
         <span>${fmt(fee)}</span>
@@ -814,17 +1337,55 @@ function renderResults(fee, totalCosts, netFee, holding, oddeleni, brokerTotal, 
             <div class="legend-dot" style="background:var(--holding)"></div>
             <span>Holding</span>
             <span class="legend-pct">${fmtP(pH*100)}</span>
+            ${Object.keys(deptByKey).length > 0 ? `<button class="legend-toggle" onclick="toggleSubRows('holding-rows', this)" title="Rozbalit">▾</button>` : ''}
           </div>
           <div class="legend-value">${fmt(holding)}</div>
         </div>
+        ${(() => {
+          if (!deptByKey || Object.keys(deptByKey).length === 0) return '';
+          const totalDept = Object.values(deptByKey).reduce((s,v) => s+v, 0);
+          return DEPARTMENTS.filter(d => deptByKey[d.key] > 0).map(({ key: dKey, label }) => {
+            // Holding per oddělení = proporcionálně stejně jako oddělení (stejná váha brokerů)
+            const holdAmt = totalDept > 0 ? holding * (deptByKey[dKey] / totalDept) : 0;
+            const dPct = holdAmt / netFee;
+            return `
+            <div class="legend-row legend-row-sub" data-group="holding-rows">
+              <div class="legend-name">
+                <div style="width:16px;flex-shrink:0"></div>
+                <div class="legend-sub-dash"></div>
+                <span style="color:var(--text-muted)">${label}</span>
+                <span class="legend-pct">${fmtP(dPct*100)}</span>
+              </div>
+              <div style="font-family:'Fraunces',serif;font-size:16px;font-weight:300;color:var(--text-muted)">${fmt(holdAmt)}</div>
+            </div>`;
+          }).join('');
+        })()}
         <div class="legend-row">
           <div class="legend-name">
             <div class="legend-dot" style="background:var(--oddeleni)"></div>
             <span>Oddělení</span>
             <span class="legend-pct">${fmtP(oPct*100)}</span>
+            ${Object.keys(deptByKey).length > 0 ? `<button class="legend-toggle" onclick="toggleSubRows('oddeleni-rows', this)" title="Rozbalit">▾</button>` : ''}
           </div>
           <div class="legend-value">${fmt(oddeleni)}</div>
         </div>
+        ${(() => {
+          if (!deptByKey || Object.keys(deptByKey).length === 0) return '';
+          return DEPARTMENTS.filter(d => deptByKey[d.key] > 0).map(({ key: dKey, label }) => {
+            const deptAmt = deptByKey[dKey];
+            const dPct = deptAmt / netFee;
+            return `
+            <div class="legend-row legend-row-sub" data-group="oddeleni-rows">
+              <div class="legend-name">
+                <div style="width:16px;flex-shrink:0"></div>
+                <div class="legend-sub-dash"></div>
+                <span style="color:var(--text-muted)">${label}</span>
+                <span class="legend-pct">${fmtP(dPct*100)}</span>
+              </div>
+              <div style="font-family:'Fraunces',serif;font-size:16px;font-weight:300;color:var(--text-muted)">${fmt(deptAmt)}</div>
+            </div>`;
+          }).join('');
+        })()}
         <div class="legend-row">
           <div class="legend-name">
             <div class="legend-dot" style="background:var(--broker)"></div>
@@ -848,19 +1409,31 @@ function renderResults(fee, totalCosts, netFee, holding, oddeleni, brokerTotal, 
         <div class="section-label">Výplaty brokerů</div>
         ${payouts.length === 0
           ? '<p style="color:var(--text-dim);font-size:12px;margin-top:8px">Žádný broker nebyl přiřazen.</p>'
-          : `<div class="brokers-grid">
-              ${payouts.map(p => {
+          : (() => {
+              // Merge payouts by broker key
+              const merged = [];
+              const seen = {};
+              payouts.forEach(p => {
                 const roleName = p.role === 'vlastni' ? 'Vlastní sazba' : (ROLES.find(r => r.key === p.role)?.label || p.role);
-                return `
+                if (seen[p.brokerKey] !== undefined) {
+                  merged[seen[p.brokerKey]].amount += p.amount;
+                  merged[seen[p.brokerKey]].roles.push(roleName);
+                } else {
+                  seen[p.brokerKey] = merged.length;
+                  merged.push({ ...p, amount: p.amount, roles: [roleName] });
+                }
+              });
+              return `<div class="brokers-grid">
+                ${merged.map(p => `
                 <div class="broker-result-card">
                   <div class="broker-result-name">${p.broker.name}</div>
-                  <div class="broker-result-role">${roleName}${p.splitCount > 1 ? ' · sdíleno' : ''}</div>
+                  <div class="broker-result-role">${p.roles.join(' + ')}</div>
                   <div class="broker-result-amount">
                     ${Math.round(p.amount).toLocaleString('cs-CZ')}<span class="currency">Kč</span>
                   </div>
-                </div>`;
-              }).join('')}
-            </div>`
+                </div>`).join('')}
+              </div>`;
+            })()
         }
       </div>
 
@@ -873,6 +1446,7 @@ addPerson(); people[people.length-1].role = 'exekuce';
 addPerson(); people[people.length-1].role = 'prostor';
 addPerson(); people[people.length-1].role = 'klient';
 renderPeople();
+renderHistory();
 </script>
 </body>
 </html>
