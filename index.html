@@ -1094,6 +1094,7 @@ function resetAll() {
   hasCalculated = false;
   currentDealId = null;
   currentDealName = '';
+  openGroups.clear();
   document.getElementById('fee').value = '';
   costs = []; costId = 0;
   renderCosts();
@@ -1155,12 +1156,22 @@ function renderDeptSection(deptByKey, payouts) {
     </div>`;
 }
 
+const openGroups = new Set();
+
 function toggleSubRows(group, btn) {
   const rows = document.querySelectorAll(`[data-group="${group}"]`);
-  const isOpen = btn.classList.contains('open');
-  rows.forEach(r => r.classList.toggle('open', !isOpen));
-  btn.classList.toggle('open', !isOpen);
-  btn.textContent = isOpen ? '▾' : '▴';
+  const isOpen = openGroups.has(group);
+  if (isOpen) {
+    openGroups.delete(group);
+    rows.forEach(r => r.classList.remove('open'));
+    btn.classList.remove('open');
+    btn.textContent = '▾';
+  } else {
+    openGroups.add(group);
+    rows.forEach(r => r.classList.add('open'));
+    btn.classList.add('open');
+    btn.textContent = '▴';
+  }
 }
 
 function exportPrint() {
@@ -1424,14 +1435,18 @@ function renderResults(fee, totalCosts, netFee, holding, oddeleni, brokerTotal, 
                 }
               });
               return `<div class="brokers-grid">
-                ${merged.map(p => `
+                ${merged.map(p => {
+                  const pct = netFee > 0 ? p.amount / netFee * 100 : 0;
+                  return `
                 <div class="broker-result-card">
                   <div class="broker-result-name">${p.broker.name}</div>
                   <div class="broker-result-role">${p.roles.join(' + ')}</div>
                   <div class="broker-result-amount">
                     ${Math.round(p.amount).toLocaleString('cs-CZ')}<span class="currency">Kč</span>
                   </div>
-                </div>`).join('')}
+                  <div style="margin-top:6px;font-size:11px;color:var(--text-dim)">${fmtP(pct)} ze základu</div>
+                </div>`;
+                }).join('')}
               </div>`;
             })()
         }
@@ -1439,6 +1454,13 @@ function renderResults(fee, totalCosts, netFee, holding, oddeleni, brokerTotal, 
 
     </div>
   `;
+
+  // Restore open state of toggle groups
+  openGroups.forEach(group => {
+    document.querySelectorAll(`[data-group="${group}"]`).forEach(r => r.classList.add('open'));
+    const btn = document.querySelector(`button[onclick*="${group}"]`);
+    if (btn) { btn.classList.add('open'); btn.textContent = '▴'; }
+  });
 }
 
 // Start with three default rows
