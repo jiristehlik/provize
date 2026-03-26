@@ -1199,49 +1199,31 @@ function calculate() {
     if (p.role !== 'vlastni') roleCount[p.role] = (roleCount[p.role] || 0) + 1;
   });
 
-  // ── Standardní role mají fixní sazby přímo z netFee (bez váhování)
-  const ROLE_WEIGHTS = { exekuce: 30, prostor: 15, klient: 15 };
+  // ── Výpočet výplat ─────────────────────────────────────────────
+  // Každý broker dostane přesně svou sazbu přímo z netFee:
+  //   - standardní role: ROLE_RATES[role] / počet brokerů sdílejících roli
+  //   - vlastní sazba: vlastniPct přímo
+  // Holding: fixně 30 % z netFee
+  // Oddělení: fixně 10 % z netFee (rozpad per oddělení podle podílu brokerů)
+  // Zbývá: neobsazené role
 
-  const MODEL_SPLITS = {
-    1:    { brokerShare: 0.60, deptShare: 0.10 },
-    0.5:  { brokerShare: 0.30, deptShare: 0.40 },
-    0.333:{ brokerShare: 0.20, deptShare: 0.50 },
-  };
-  function getModelSplits(coef) {
-    if (Math.abs(coef - 1)   < 0.01) return MODEL_SPLITS[1];
-    if (Math.abs(coef - 0.5) < 0.01) return MODEL_SPLITS[0.5];
-    return MODEL_SPLITS[0.333];
-  }
+  const ROLE_RATES = { exekuce: 30, prostor: 15, klient: 15 };
 
   const payouts = active.map(p => {
     const broker = brokerByKey(p.brokerKey);
-    const modelCoef = broker?.modelCoef ?? 1;
-    const splits = getModelSplits(modelCoef);
+    const slotPct = p.role === 'vlastni'
+      ? (p.vlastniPct ?? 0)
+      : (ROLE_RATES[p.role] ?? 0) / (roleCount[p.role] || 1);
 
-    if (p.role === 'vlastni') {
-      // Vlastní: přímo % z netFee, mimo standardní váhování
-      const slotPct   = p.vlastniPct ?? 0;
-      const brokerPct = slotPct * modelCoef;
-      const deptPct   = slotPct - brokerPct;
-      return { ...p, broker, slotPct, brokerPct, deptPct,
-               splitCount: 1,
-               amount: netFee * brokerPct / 100,
-               deptAmt: netFee * deptPct / 100 };
-    }
+    const brokerAmt = netFee * slotPct / 100;
 
-    // Standardní role: fixní sazba role / počet brokerů sdílejících roli
-    const fullRatePct  = ROLE_WEIGHTS[p.role] ?? 0;
-    const slotPct      = fullRatePct / (roleCount[p.role] || 1);
-    const brokerFeePart = netFee * slotPct / 100;
-
-    const brokerAmt = brokerFeePart * splits.brokerShare;
-    const deptAmt   = brokerFeePart * splits.deptShare;
-    const brokerPct = slotPct * splits.brokerShare;
-    const deptPct   = slotPct * splits.deptShare;
-
-    return { ...p, broker, slotPct, brokerPct, deptPct,
-             splitCount: roleCount[p.role] || 1,
-             amount: brokerAmt, deptAmt };
+    return {
+      ...p, broker, slotPct,
+      splitCount: roleCount[p.role] || 1,
+      amount: brokerAmt,
+      deptAmt: 0,  // oddělení se počítá globálně níže
+      holdAmt: 0,
+    };
   });
 
   // Validace: celkové sloty nesmí přesáhnout 60 %
@@ -1251,27 +1233,35 @@ function calculate() {
     return;
   }
 
-  const totalBroker = payouts.reduce((s, p) => s + p.amount, 0);
+  const totalBroker     = payouts.reduce((s, p) => s + p.amount, 0);
+  const holdingAmtFinal = netFee * 0.30;
+  const oddeleniAmtFinal = netFee * 0.10;
 
-  // Oddělení per dept
-  const deptByKey = {};
+  // Rozpad oddělení per dept: proporcionálně podle výplat brokerů v každém oddělení
+  const brokerTotalByDept = {};
   payouts.forEach(p => {
     if (!p.broker?.dept) return;
-    deptByKey[p.broker.dept] = (deptByKey[p.broker.dept] || 0) + p.deptAmt;
+    brokerTotalByDept[p.broker.dept] = (brokerTotalByDept[p.broker.dept] || 0) + p.amount;
   });
-  const oddeleniAmtFinal = Object.values(deptByKey).reduce((s, v) => s + v, 0);
+  const deptByKey  = {};
+  const holdByKey  = {};
+  const totalBrokerForDept = Object.values(brokerTotalByDept).reduce((s, v) => s + v, 0);
+  Object.entries(brokerTotalByDept).forEach(([dk, amt]) => {
+    const share = totalBrokerForDept > 0 ? amt / totalBrokerForDept : 0;
+    deptByKey[dk] = oddeleniAmtFinal * share;
+    holdByKey[dk] = holdingAmtFinal  * share;
+  });
 
-  // Zbývá rozdělit = neobsazené role
-  const STANDARD_SLOTS = { exekuce: 30, prostor: 15, klient: 15 };
+  // Zbývá = neobsazené standardní role
   const assignedRoles = new Set(active.filter(p => p.role !== 'vlastni').map(p => p.role));
   const vlastniSlots  = active.filter(p => p.role === 'vlastni').reduce((s, p) => s + (p.vlastniPct ?? 0), 0);
   let allocatedPct = vlastniSlots;
-  for (const role of Object.keys(STANDARD_SLOTS)) {
-    if (assignedRoles.has(role)) allocatedPct += STANDARD_SLOTS[role];
+  for (const role of Object.keys(ROLE_RATES)) {
+    if (assignedRoles.has(role)) allocatedPct += ROLE_RATES[role];
   }
   const remainingAmt = Math.max(0, netFee * (0.60 - allocatedPct / 100));
 
-  renderResults(fee, totalCosts, netFee, holdingAmt, oddeleniAmtFinal, totalBroker, remainingAmt, payouts, pctH, deptByKey);
+  renderResults(fee, totalCosts, netFee, holdingAmtFinal, oddeleniAmtFinal, totalBroker, remainingAmt, payouts, pctH, deptByKey, holdByKey);
   document.getElementById('btn-export').disabled = false;
   // Show correct save UI based on whether a deal is loaded
   if (!currentDealId) updateSaveUI('new');
@@ -1281,7 +1271,7 @@ function calculate() {
 function fmt(n)    { return Math.round(n).toLocaleString('cs-CZ') + ' Kč'; }
 function fmtP(n)   { return n.toFixed(1).replace('.', ',') + ' %'; }
 
-function renderResults(fee, totalCosts, netFee, holding, oddeleni, brokerTotal, remaining, payouts, pH, deptByKey) {
+function renderResults(fee, totalCosts, netFee, holding, oddeleni, brokerTotal, remaining, payouts, pH, deptByKey, holdByKey) {
   const panel = document.getElementById('panel-right');
   const oPct  = oddeleni / netFee;
   const bPct  = brokerTotal / netFee;
@@ -1340,11 +1330,10 @@ function renderResults(fee, totalCosts, netFee, holding, oddeleni, brokerTotal, 
           <div class="legend-value">${fmt(holding)}</div>
         </div>
         ${(() => {
-          if (!deptByKey || Object.keys(deptByKey).length === 0) return '';
-          const totalDept = Object.values(deptByKey).reduce((s,v) => s+v, 0);
-          return DEPARTMENTS.filter(d => deptByKey[d.key] > 0).map(({ key: dKey, label }) => {
-            // Holding per oddělení = proporcionálně stejně jako oddělení (stejná váha brokerů)
-            const holdAmt = totalDept > 0 ? holding * (deptByKey[dKey] / totalDept) : 0;
+          if (!holdByKey || Object.keys(holdByKey).length === 0) return '';
+          const totalHold = Object.values(holdByKey).reduce((s,v) => s+v, 0);
+          return DEPARTMENTS.filter(d => (holdByKey[d.key] || 0) > 0).map(({ key: dKey, label }) => {
+            const holdAmt = holdByKey[dKey];
             const dPct = holdAmt / netFee;
             return `
             <div class="legend-row legend-row-sub" data-group="holding-rows">
