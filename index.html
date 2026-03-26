@@ -1199,27 +1199,9 @@ function calculate() {
     if (p.role !== 'vlastni') roleCount[p.role] = (roleCount[p.role] || 0) + 1;
   });
 
-  // ── Krok 1: Váhy oddělení podle role (Model 1 reference sazby)
+  // ── Standardní role mají fixní sazby přímo z netFee (bez váhování)
   const ROLE_WEIGHTS = { exekuce: 30, prostor: 15, klient: 15 };
 
-  // Spočítej celkovou váhu každého brokera (součet sazeb jeho rolí)
-  // Pro vlastni: použij vlastniPct jako váhu
-  const brokerWeights = {}; // brokerKey → celková váha (%)
-  active.forEach(p => {
-    const weight = p.role === 'vlastni'
-      ? (p.vlastniPct ?? 0)
-      : (ROLE_WEIGHTS[p.role] ?? 0) / (roleCount[p.role] || 1);
-    brokerWeights[p.brokerKey] = (brokerWeights[p.brokerKey] || 0) + weight;
-  });
-
-  // Celková váha všech brokerů = základ pro rozdělení fee mezi oddělení
-  const totalWeight = Object.values(brokerWeights).reduce((s, v) => s + v, 0);
-
-  // Krok 2: Přiřaď každému oddělení jeho díl fee (proporcionálně k váze brokerů)
-  // Pak z tohoto dílu vypočítej holding, broker a dept podle modelu brokera
-  // Model koeficienty: M1 broker=60%, dept=10%, holding=30%
-  //                    M2 broker=30%, dept=40%, holding=30%
-  //                    M3 broker=20%, dept=50%, holding=30%
   const MODEL_SPLITS = {
     1:    { brokerShare: 0.60, deptShare: 0.10 },
     0.5:  { brokerShare: 0.30, deptShare: 0.40 },
@@ -1236,25 +1218,30 @@ function calculate() {
     const modelCoef = broker?.modelCoef ?? 1;
     const splits = getModelSplits(modelCoef);
 
-    const roleWeight = p.role === 'vlastni'
-      ? (p.vlastniPct ?? 0)
-      : (ROLE_WEIGHTS[p.role] ?? 0) / (roleCount[p.role] || 1);
+    if (p.role === 'vlastni') {
+      // Vlastní: přímo % z netFee, mimo standardní váhování
+      const slotPct   = p.vlastniPct ?? 0;
+      const brokerPct = slotPct * modelCoef;
+      const deptPct   = slotPct - brokerPct;
+      return { ...p, broker, slotPct, brokerPct, deptPct,
+               splitCount: 1,
+               amount: netFee * brokerPct / 100,
+               deptAmt: netFee * deptPct / 100 };
+    }
 
-    // Podíl fee připadající na tohoto brokera (podle váhy jeho rolí)
-    const brokerFeeShare = totalWeight > 0 ? roleWeight / totalWeight : 0;
-    const brokerFeePart  = netFee * brokerFeeShare; // Kč připadající na tohoto brokera
+    // Standardní role: fixní sazba role / počet brokerů sdílejících roli
+    const fullRatePct  = ROLE_WEIGHTS[p.role] ?? 0;
+    const slotPct      = fullRatePct / (roleCount[p.role] || 1);
+    const brokerFeePart = netFee * slotPct / 100;
 
     const brokerAmt = brokerFeePart * splits.brokerShare;
     const deptAmt   = brokerFeePart * splits.deptShare;
-    // holdingAmt se počítá globálně jako 30% z celého netFee
+    const brokerPct = slotPct * splits.brokerShare;
+    const deptPct   = slotPct * splits.deptShare;
 
-    // slotPct pro validaci a zobrazení (Model 1 reference)
-    const slotPct  = roleWeight;
-    const brokerPct = brokerFeeShare * splits.brokerShare * 100;
-    const deptPct   = brokerFeeShare * splits.deptShare   * 100;
-
-    return { ...p, broker, slotPct, brokerPct, deptPct, splitCount: roleCount[p.role] || 1,
-             amount: brokerAmt, deptAmt, brokerFeePart };
+    return { ...p, broker, slotPct, brokerPct, deptPct,
+             splitCount: roleCount[p.role] || 1,
+             amount: brokerAmt, deptAmt };
   });
 
   // Validace: celkové sloty nesmí přesáhnout 60 %
