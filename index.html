@@ -668,6 +668,72 @@
     @page { margin: 1.2cm 1.5cm; size: A4; }
   }
 
+  /* Department summary */
+  .dept-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .dept-summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .dept-summary-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--oddeleni);
+  }
+  .dept-summary-name {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .dept-summary-total {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -1px;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .dept-summary-pct {
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0;
+  }
+  .dept-summary-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
+  .dept-summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .dept-summary-row span:last-child {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 12px;
+  }
+
   @media (max-width: 700px) {
     .app { grid-template-columns: 1fr; }
     .panel-left { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); }
@@ -1437,6 +1503,54 @@ function renderResults(fee, totalCosts, netFee, holding, oddeleni, brokerTotal, 
             })()
         }
       </div>
+
+      ${(() => {
+        if (!deptByKey || Object.keys(deptByKey).length === 0) return '';
+
+        // Broker amounts per dept
+        const brokerByDept = {};
+        payouts.forEach(p => {
+          if (!p.broker?.dept) return;
+          brokerByDept[p.broker.dept] = (brokerByDept[p.broker.dept] || 0) + p.amount;
+        });
+
+        const cards = DEPARTMENTS.filter(d => deptByKey[d.key] > 0).map(({ key: dKey, label }) => {
+          const deptAmt   = deptByKey[dKey]    || 0;
+          const holdAmt   = holdByKey[dKey]    || 0;
+          const brokerAmt = brokerByDept[dKey] || 0;
+          const total     = deptAmt + holdAmt + brokerAmt;
+          const totalPct  = netFee > 0 ? total / netFee * 100 : 0;
+
+          return `
+          <div class="dept-summary-card">
+            <div class="dept-summary-name">${label}</div>
+            <div class="dept-summary-total">
+              ${Math.round(total).toLocaleString('cs-CZ')}<span class="currency">Kč</span>
+              <span class="dept-summary-pct">${fmtP(totalPct)}</span>
+            </div>
+            <div class="dept-summary-rows">
+              <div class="dept-summary-row">
+                <span>Holding</span>
+                <span>${fmt(holdAmt)}</span>
+              </div>
+              <div class="dept-summary-row">
+                <span>Oddělení</span>
+                <span>${fmt(deptAmt)}</span>
+              </div>
+              <div class="dept-summary-row">
+                <span>Brokeři</span>
+                <span>${fmt(brokerAmt)}</span>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+
+        return `
+        <div>
+          <div class="section-label">Souhrn oddělení</div>
+          <div class="dept-summary-grid">${cards}</div>
+        </div>`;
+      })()}
 
     </div>
   `;
