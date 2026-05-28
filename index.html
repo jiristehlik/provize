@@ -1008,10 +1008,11 @@ const BROKERS = [
 ];
 
 const ROLES = [
-  { key: 'exekuce', label: 'Exekuce' },
-  { key: 'prostor',  label: 'Dodání prostoru' },
-  { key: 'klient',   label: 'Dodání klienta' },
+  { key: 'exekuce', label: 'Exekuce (30 %)' },
+  { key: 'prostor',  label: 'Dodání prostoru (15 %)' },
+  { key: 'klient',   label: 'Dodání klienta (15 %)' },
   { key: 'vlastni',  label: 'Vlastní' },
+  { key: 'dopocet',  label: 'Dopočítat do 100%' },
 ];
 
 let costs = [];
@@ -1081,17 +1082,30 @@ function renderPeople() {
     // no badge shown - rates are hidden
     let badgeHtml = '';
 
-    // custom % input for vlastni role – styled like cost input
+    // custom input for vlastni role – % a částka vedle sebe (provázané)
     const vlastniHtml = p.role === 'vlastni' ? `
-      <div style="grid-column:1/-1">
-        <div class="field-label">Vlastní sazba (% z fee)</div>
-        <div class="cost-amount-wrap" style="max-width:160px">
-          <input type="number" min="1" max="100" step="1"
-            value="${p.vlastniPct != null ? p.vlastniPct : ''}"
-            placeholder="0"
-            style="font-family:'Fraunces',serif;font-size:22px;font-weight:300;padding:10px 36px 10px 12px;-moz-appearance:textfield"
-            onchange="updatePerson(${p.id}, 'vlastniPct', Math.min(100,Math.max(1,parseFloat(this.value)||1)))">
-          <span class="cost-kc" style="font-size:13px">%</span>
+      <div style="grid-column:1/-1;display:flex;gap:10px;align-items:flex-end">
+        <div style="flex:0 0 auto">
+          <div class="field-label">Vlastní sazba (%)</div>
+          <div class="cost-amount-wrap" style="width:110px">
+            <input type="number" min="0" max="100" step="0.1"
+              value="${p.vlastniPct != null ? p.vlastniPct : ''}"
+              placeholder="0"
+              style="font-family:'Fraunces',serif;font-size:22px;font-weight:300;padding:10px 30px 10px 12px;-moz-appearance:textfield"
+              oninput="updateVlastniPct(${p.id}, this.value)">
+            <span class="cost-kc" style="font-size:13px">%</span>
+          </div>
+        </div>
+        <div style="flex:1 1 auto;min-width:0">
+          <div class="field-label">nebo částka (Kč)</div>
+          <div class="cost-amount-wrap">
+            <input type="text" inputmode="numeric"
+              value="${p.vlastniAmount != null ? Math.round(p.vlastniAmount).toLocaleString('cs-CZ').replace(/\u00a0/g, ' ') : ''}"
+              placeholder="0"
+              style="font-family:'Fraunces',serif;font-size:22px;font-weight:300;padding:10px 36px 10px 12px"
+              oninput="updateVlastniAmount(${p.id}, this.value, this)">
+            <span class="cost-kc" style="font-size:13px">Kč</span>
+          </div>
         </div>
       </div>` : '';
 
@@ -1122,6 +1136,19 @@ function addPerson() {
 let hasCalculated = false;
 
 function liveUpdate() {
+  // Drž vlastní sazby zadané částkou v synchronu se základem
+  const base = getBaseValue();
+  if (base > 0) {
+    people.forEach(p => {
+      if (p.role === 'vlastni' && p.vlastniAmount != null) {
+        const newPct = p.vlastniAmount / base * 100;
+        if (Math.abs(newPct - (p.vlastniPct ?? 0)) > 0.001) {
+          p.vlastniPct = newPct;
+          syncVlastniSibling(p.id, 'pct');
+        }
+      }
+    });
+  }
   if (hasCalculated) { markDirty(); calculate(); }
 }
 
@@ -1133,7 +1160,98 @@ function removePerson(id) {
 
 function updatePerson(id, field, value) {
   const p = people.find(p => p.id === id);
-  if (p) { p[field] = value; renderPeople(); liveUpdate(); }
+  if (!p) return;
+
+  // "Dopočítat do 100%" – jednorázový výpočet zbytku do broker poolu (60 %)
+  if (field === 'role' && value === 'dopocet') {
+    const base = getBaseValue();
+    // Součet slotů ostatních brokerů (kromě tohoto)
+    let othersPct = 0;
+    const tmpRoleCount = {};
+    people.forEach(x => {
+      if (x.id === id || !x.brokerKey) return;
+      if (x.role !== 'vlastni') tmpRoleCount[x.role] = (tmpRoleCount[x.role] || 0) + 1;
+    });
+    people.forEach(x => {
+      if (x.id === id || !x.brokerKey) return;
+      if (x.role === 'vlastni') {
+        othersPct += (x.vlastniPct ?? 0);
+      } else {
+        const rate = ({ exekuce: 30, prostor: 15, klient: 15 })[x.role] ?? 0;
+        othersPct += rate / (tmpRoleCount[x.role] || 1);
+      }
+    });
+    const remainder = Math.max(0, 60 - othersPct);
+    p.role = 'vlastni';
+    p.vlastniPct = +remainder.toFixed(2);
+    p.vlastniAmount = base > 0 ? base * remainder / 100 : null;
+    renderPeople();
+    liveUpdate();
+    return;
+  }
+
+  p[field] = value;
+  renderPeople();
+  liveUpdate();
+}
+
+function getBaseValue() {
+  // Základ pro dělení = fee - externí náklady (stejný jako v calculate)
+  const fee = getFeeValue();
+  const totalCosts = costs.reduce((s, c) => s + (c.amount || 0), 0);
+  return Math.max(0, fee - totalCosts);
+}
+
+// Vlastní sazba: % ↔ Kč provázané, bez re-renderu (zachová focus)
+function updateVlastniPct(id, raw) {
+  const p = people.find(p => p.id === id);
+  if (!p) return;
+  const pct = Math.min(100, Math.max(0, parseFloat(raw) || 0));
+  p.vlastniPct = pct;
+  const base = getBaseValue();
+  p.vlastniAmount = base > 0 ? base * pct / 100 : null;
+  syncVlastniSibling(id, 'amount');
+  liveUpdate();
+}
+
+function updateVlastniAmount(id, raw, el) {
+  const p = people.find(p => p.id === id);
+  if (!p) return;
+  const clean = String(raw).replace(/\s/g, '').replace(/[^0-9]/g, '');
+  const amt = clean === '' ? 0 : parseInt(clean, 10);
+  p.vlastniAmount = amt;
+  const base = getBaseValue();
+  p.vlastniPct = base > 0 ? amt / base * 100 : 0;
+  // reformátuj zobrazení s mezerami, zachovej kurzor
+  if (el) {
+    const cursor = el.selectionStart;
+    const oldLen = el.value.length;
+    el.value = amt > 0 ? amt.toLocaleString('cs-CZ').replace(/\u00a0/g, ' ') : '';
+    const diff = el.value.length - oldLen;
+    const newPos = Math.max(0, cursor + diff);
+    el.setSelectionRange(newPos, newPos);
+  }
+  syncVlastniSibling(id, 'pct');
+  liveUpdate();
+}
+
+// Aktualizuje jen vedlejší input (ne ten ve kterém uživatel píše), aby nezmizel focus
+function syncVlastniSibling(id, which) {
+  const p = people.find(p => p.id === id);
+  if (!p) return;
+  const cards = document.querySelectorAll('.person-card');
+  const idx = people.findIndex(x => x.id === id);
+  const card = cards[idx];
+  if (!card) return;
+  const inputs = card.querySelectorAll('input[type="number"]');
+  // pořadí: [0]=%, [1]=Kč
+  if (which === 'amount' && inputs[1]) {
+    inputs[1].value = p.vlastniAmount != null && p.vlastniAmount > 0
+      ? Math.round(p.vlastniAmount).toLocaleString('cs-CZ').replace(/\u00a0/g, ' ')
+      : '';
+  } else if (which === 'pct' && inputs[0]) {
+    inputs[0].value = p.vlastniPct != null ? +p.vlastniPct.toFixed(2) : '';
+  }
 }
 
 function formatFeeInput(el) {
@@ -1148,6 +1266,16 @@ function formatFeeInput(el) {
     el.setSelectionRange(cursor + diff, cursor + diff);
   } else {
     el.value = '';
+  }
+  // Přepočti vlastní sazby zadané částkou na nové % podle nového základu
+  const base = getBaseValue();
+  if (base > 0) {
+    people.forEach(p => {
+      if (p.role === 'vlastni' && p.vlastniAmount != null) {
+        p.vlastniPct = p.vlastniAmount / base * 100;
+        syncVlastniSibling(p.id, 'pct');
+      }
+    });
   }
   liveUpdate();
 }
@@ -1477,7 +1605,9 @@ function renderResults(fee, totalCosts, netFee, holding, oddeleni, brokerTotal, 
               const merged = [];
               const seen = {};
               payouts.forEach(p => {
-                const roleName = p.role === 'vlastni' ? 'Vlastní sazba' : (ROLES.find(r => r.key === p.role)?.label || p.role);
+                const roleName = p.role === 'vlastni'
+                  ? `Vlastní sazba (${fmtP(p.slotPct)})`
+                  : (ROLES.find(r => r.key === p.role)?.label || p.role);
                 if (seen[p.brokerKey] !== undefined) {
                   merged[seen[p.brokerKey]].amount += p.amount;
                   merged[seen[p.brokerKey]].roles.push(roleName);
@@ -1526,7 +1656,6 @@ function renderResults(fee, totalCosts, netFee, holding, oddeleni, brokerTotal, 
             <div class="dept-summary-name">${label}</div>
             <div class="dept-summary-total">
               ${Math.round(total).toLocaleString('cs-CZ')}<span class="currency">Kč</span>
-              <span class="dept-summary-pct">${fmtP(totalPct)}</span>
             </div>
             <div class="dept-summary-rows">
               <div class="dept-summary-row">
