@@ -404,7 +404,7 @@
   /* Cost cards */
   .cost-card {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 132px) auto;
     gap: 8px;
     align-items: center;
   }
@@ -437,7 +437,6 @@
     pointer-events: none;
   }
   .cost-label-input {
-    grid-column: 1 / -1;
     width: 100%;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -451,6 +450,11 @@
   }
   .cost-label-input:focus { border-color: var(--accent); }
   .cost-label-input::placeholder { color: var(--text-dim); }
+  .cost-card .cost-amount-wrap input {
+    font-size: 17px;
+    padding: 8px 30px 8px 12px;
+  }
+  .cost-card .cost-kc { right: 10px; font-size: 11px; }
 
   input[type=number]::-webkit-outer-spin-button,
   input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
@@ -1063,15 +1067,14 @@ function renderCosts() {
       <input class="cost-label-input" type="text" placeholder="Název nákladu"
         oninput="updateCost(${c.id}, 'label', this.value); liveUpdate()">
       <div class="cost-amount-wrap">
-        <input type="number" min="0" step="100" placeholder="0"
-          value="${c.amount || ''}"
-          style="-moz-appearance:textfield"
-          oninput="updateCost(${c.id}, 'amount', parseFloat(this.value)||0); liveUpdate()">
+        <input class="cost-amount-input" type="text" inputmode="numeric" placeholder="0"
+          oninput="formatCostInput(this, ${c.id})">
         <span class="cost-kc">Kč</span>
       </div>
       <button class="person-delete" onclick="removeCost(${c.id})" title="Odstranit">×</button>
     `;
     card.querySelector('.cost-label-input').value = c.label || '';
+    card.querySelector('.cost-amount-input').value = c.amount ? fmtNum(c.amount) : '';
     list.appendChild(card);
   });
 }
@@ -1271,6 +1274,26 @@ function syncVlastniSibling(id, which) {
   } else if (which === 'pct' && inputs[0]) {
     inputs[0].value = p.vlastniPct != null ? +p.vlastniPct.toFixed(2) : '';
   }
+}
+
+function fmtNum(n) {
+  return Math.round(n).toLocaleString('cs-CZ').replace(/\u00a0/g, ' ');
+}
+
+function formatCostInput(el, id) {
+  const raw = el.value.replace(/\s/g, '').replace(/[^0-9]/g, '');
+  const num = parseInt(raw, 10);
+  if (!isNaN(num)) {
+    const cursor = el.selectionStart;
+    const oldLen = el.value.length;
+    el.value = fmtNum(num);
+    const diff = el.value.length - oldLen;
+    el.setSelectionRange(cursor + diff, cursor + diff);
+  } else {
+    el.value = '';
+  }
+  updateCost(id, 'amount', isNaN(num) ? 0 : num);
+  liveUpdate();
 }
 
 function formatFeeInput(el) {
